@@ -1,30 +1,37 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    Dockerfile                                         :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: bwong <bwong@student.42.fr>                +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2023/12/06 20:49:29 by bwong             #+#    #+#              #
-#    Updated: 2023/12/06 20:55:38 by bwong            ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
+# defines base image
+# the following alpine version is required by the subject
+FROM alpine:3.17
 
-# Penultimate Debian:Buster version
-FROM debian:bookworm
+# get environment variables from the ../.env file
+ARG MYSQL_DATABASE
+ARG MYSQL_USER
+ARG MYSQL_PASSWORD
+ARG MYSQL_ROOT
+ARG MYSQL_ROOT_PASSWORD
 
-# update needed to use apt-get install
-RUN apt-get update -y
+# COPY the configuration file to the container
+COPY ./conf/mariadb.conf /etc/my.cnf
 
-# Necessary Libraries and Packages
-RUN apt-get install mariadb-server
+# COPY the mariadb_script.sh file to the container
+COPY ./tools/mariadb_setup.sh /tmp/mariadb_setup.sh
 
-# Add files to the container
-COPY /tools/ /tmp/
-COPY /conf/wordpress.sql /tmp/
+# Change the permissions of the mariadb_script.sh file to be executable and
+# run the mariadb_script.sh file (ash -f is used to force the execution of the file)
+RUN chmod a+x /tmp/mariadb_setup.sh; ash -f /tmp/mariadb_setup.sh
 
-# Configure MariaDB connection with Wordpress
-COPY /conf/50-server.cnf /etc/mysql/mariadb.conf.d/50-server.cnf
-RUN mysql_install_db
+# update and upgrade the alpine packages
+RUN apk update && apk upgrade
 
-ENTRYPOINT ["sh","-c", "/bin/bash /tmp/script.sh;"]
+# install mariadb and mariadb-client and create the required directories
+# as well as change the ownership of the directories to mysql and
+# change the permissions of the directories to 777 which means that
+# everyone can read, write and execute
+RUN mkdir -p /var/lib/mysql /var/run/mysqld && chmod -R 777 /var/run/mysqld \
+	&& apk add --no-cache mariadb mariadb-client openrc; \
+	chown -R mysql:mysql /var/lib/mysql /var/run/mysqld
+
+# expose port 3306 so that it can be accessed from outside the container
+EXPOSE 3306
+
+# ENTRYPOINT is used to run the mariadb server
+ENTRYPOINT  [ "mariadbd-safe" ]
