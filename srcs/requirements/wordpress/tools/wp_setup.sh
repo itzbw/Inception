@@ -1,26 +1,17 @@
 #!/bin/sh
 
-# Install wordpress and set the right ownership to the wordpress files.
-wp core install --allow-root --path=/var/www/wordpress \
- --url=$WORDPRESS_URL --title=$WORDPRESS_TITLE --admin_user=$WORDPRESS_ADMIN_USER \
- --admin_password=$WORDPRESS_ADMIN_PASSWORD --admin_email=$WORDPRESS_ADMIN_EMAIL
+if ! wp core is-installed --allow-root --path=/var/www/wordpress; then
+    chown -R www-data:www-data /var/www/
+    sudo -u www-data sh -c "wp core download"
+    sudo -u www-data sh -c "wp config create --dbname=$WORDPRESS_DB_NAME --dbuser=$WORDPRESS_DB_USER --dbpass=$WORDPRESS_DB_PASSWORD --dbhost=$WORDPRESS_DB_HOST --dbcharset='utf8'"
+    sudo -u www-data sh -c "wp core install --url=$WORDPRESS_URL --title=Inception --admin_user=$WORDPRESS_ADMIN_USER --admin_password=$WORDPRESS_ADMIN_PASSWORD --admin_email=$WORDPRESS_ADMIN_EMAIL --skip-email"
+    sudo -u www-data sh -c "wp user create $WORDPRESS_GUEST_USER $WORDPRESS_GUEST_EMAIL --role=author --user_pass=$WORDPRESS_GUEST_PASSWORD"
+    sudo -u www-data sh -c "wp theme install astra --activate"
+    sudo -u www-data sh -c "wp plugin update --all"
 
-# Create database and set the right ownership.
-# dbprefix='wp_' is the default value for the database prefix.
-# dbcharset='utf8' is the default value for the database charset.
-wp config create --allow-root --path=/var/www/wordpress \
-	--dbname=$MYSQL_DATABASE \
-	--dbuser=$MYSQL_USER \
-	--dbpass=$MYSQL_DATABASE_PASSWORD \
-	--dbhost=$MYSQL_HOST \
-	--dbprefix='wp_' \
-	--dbcharset="utf8"
+    ln -s $(find /usr/sbin -name 'php-fpm*') /usr/bin/php-fpm
+else
+	echo "wordpress already downloaded"
+fi
 
-# Create a new user for wordpress
-wp user create $WORDPRESS_GUEST_USER $WORDPRESS_GUEST_EMAIL --user_pass=$WORDPRESS_GUEST_PASSWORD \
- --allow-root
-
- #Login credentials to wp-admin
- php-fpm81 -F
-
- echo "----Wordpress is up----"
+exec /usr/bin/php-fpm -F

@@ -1,38 +1,48 @@
-FROM alpine:3.17
+#the image set is the penultime stable version of debian
+FROM 		debian:bullseye
 
-ARG MYSQL_HOST
-ARG MYSQL_DATABASE
-ARG MYSQL_USER
-ARG MYSQL_PASSWORD
-ARG WP_URL
-ARG WP_TITLE
-ARG WP_ADMIN_USER
-ARG WP_ADMIN_PASSWORD
-ARG WP_ADMIN_EMAIL
-ARG WP_USER
-ARG WP_PASSWORD
-ARG WP_USER_EMAIL
+#the args that are needed from the .env file
+ARG			WORDPRESS_DB_HOST
+ARG			WORDPRESS_DB_NAME
+ARG			WORDPRESS_URL
+ARG			WORDPRESS_GUEST_USER
+ARG			WORDPRESS_GUEST_PASSWORD
+ARG			WORDPRESS_DB_USER
+ARG			WORDPRESS_DB_PASSWORD
+ARG			WORDPRESS_ADMIN_USER
+ARG			WORDPRESS_ADMIN_PASSWORD
+ARG			WORDPRESS_ADMIN_EMAIL
 
+#updates the package lists
+RUN			apt-get update
 
-# Move scripts to container
-COPY ./tools/wp-setup.sh /tmp/wp-setup.sh
-RUN chmod +x /tmp/wp-setup.sh
+#install all the needed programs for the wordpress to work (specially php and mariadb-client)
+RUN			apt-get install -y apt-utils vim wget \
+			php \
+			php-fpm \
+			php-mysql \
+			mariadb-client \
+			wget \
+			sudo \
+			&& mkdir /run/php
 
-# Update and install dependencies
-RUN apk update && apk add --no-cache mysql-client php-fpm php81 \
-			php81-phar php81-common php81-session php81-iconv php81-json \
-			php81-gd php81-curl php81-xml php81-mysqli php81-imap php81-cgi \
-			fcgi php81-pdo php81-pdo_mysql php81-soap php81-posix php81-tokenizer \
-			php81-gettext php81-ldap php81-ctype php81-dom php81-simplexml
+#set php-fm to listen through port 9000
+COPY		conf/www.conf /etc/php/8.1/fpm/pool.d/www.conf
 
-# Download and configure Wordpress
-WORKDIR /var/www/wordpress
-RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
-	&& chmod +x wp-cli.phar \
-	&& mv wp-cli.phar /usr/local/bin/wp \
-	&& wp core download --allow-root
+#download wp-cli and moves it to a folder inside the container
+RUN			wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar  \
+			&& chmod +x wp-cli.phar \
+			&& mv wp-cli.phar /usr/bin/wp
 
-EXPOSE 9000
-RUN echo "listen = 0.0.0.0:9000" >> /etc/php81/php-fpm.d/www.conf
+#exposes port 9000, which is the default port used by PHP-FPM
+EXPOSE		9000
 
-ENTRYPOINT [ "ash", "-f", "/tmp/wp-entrypoint.sh" ]
+#set the container initial directory
+WORKDIR		/var/www/html/wordpress
+
+#Copies the script for the installation of wordpress
+COPY		tools/wp_setup.sh .
+RUN			chmod 777 wp_setup.sh
+
+#Sets the entrypoint for the container to the wp_install.sh script
+ENTRYPOINT ["sh", "wp_setup.sh"]

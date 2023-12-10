@@ -1,37 +1,41 @@
-# defines base image
-# the following alpine version is required by the subject
-FROM alpine:3.17
+#the image set is the penultime stable version of debian
+FROM		debian:bullseye
 
-# get environment variables from the ../.env file
-ARG MYSQL_DATABASE
-ARG MYSQL_USER
-ARG MYSQL_PASSWORD
-ARG MYSQL_ROOT
-ARG MYSQL_ROOT_PASSWORD
+#the args that are needed from the .env file
+ARG			MYSQL_DATABASE
+ARG			MYSQL_ROOT
+ARG			MYSQL_ROOT_PASSWORD
+ARG			MYSQL_USER
+ARG			MYSQL_PASSWORD
 
-# COPY the configuration file to the container
-COPY ./conf/mariadb.conf /etc/my.cnf
+#updates the package lists
+RUN			apt update
 
-# COPY the mariadb_script.sh file to the container
-COPY ./tools/mariadb_setup.sh /tmp/mariadb_setup.sh
+#install mariadb and necessary for it to work
+RUN			apt install mariadb-server mariadb-client procps -y
 
-# Change the permissions of the mariadb_script.sh file to be executable and
-# run the mariadb_script.sh file (ash -f is used to force the execution of the file)
-RUN chmod a+x /tmp/mariadb_setup.sh; ash -f /tmp/mariadb_setup.sh
+#allow mysqld daemon to run, purge and recreate /var/lib/mysql with appropriate ownership
+RUN			mkdir -p /var/lib/mysql /var/run/mysqld && \
+			chown -R mysql:mysql /var/lib/mysql /var/run/mysqld && \
+			chmod 777 /var/run/mysqld
 
-# update and upgrade the alpine packages
-RUN apk update && apk upgrade
+# Allow mariadb to communicate with wordpress in the network
+RUN			rm /etc/mysql/mariadb.conf.d/50-server.cnf
+COPY		./conf/50-server.conf /etc/mysql/mariadb.conf.d/
+RUN			chmod 644 /etc/mysql/mariadb.conf.d/50-server.conf
 
-# install mariadb and mariadb-client and create the required directories
-# as well as change the ownership of the directories to mysql and
-# change the permissions of the directories to 777 which means that
-# everyone can read, write and execute
-RUN mkdir -p /var/lib/mysql /var/run/mysqld && chmod -R 777 /var/run/mysqld \
-	&& apk add --no-cache mariadb mariadb-client openrc; \
-	chown -R mysql:mysql /var/lib/mysql /var/run/mysqld
+#sends the mariadb address to the configuration file
+RUN			echo "\n[mariadb]\nbind-address=0.0.0.0\nport=3306\n" >>/etc/mysql/mariadb.conf
 
-# expose port 3306 so that it can be accessed from outside the container
-EXPOSE 3306
+#copies the tools folder inside the container and changes it's permission
+COPY		tools /tmp/
+RUN			chmod a+x /tmp/mariadb_setup.sh
 
-# ENTRYPOINT is used to run the mariadb server
-ENTRYPOINT  [ "mariadbd-safe" ]
+#runs the script to setup the mariadb inside the container
+RUN			/tmp/mariadb_setup.sh
+
+#exposes the 3306 port (default port for MariaDB)
+EXPOSE		3306
+
+#Sets the entrypoint for the docker
+ENTRYPOINT	["mysqld_safe"]
