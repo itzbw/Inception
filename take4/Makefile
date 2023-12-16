@@ -1,33 +1,28 @@
-# Define variables
-DOCKER_COMPOSE_FILE=./srcs/docker-compose.yml
-DATA_DIR=/home/bw/data
-
-# Phony targets
-.PHONY: all clean fclean stop setup
-
-# Default target
 all:
-	@if [ $$(sudo docker-compose -f $(DOCKER_COMPOSE_FILE) images | wc -l) -eq 1 ]; then \
-		echo "Starting containers..."; \
-		mkdir -p $(DATA_DIR)/wordpress $(DATA_DIR)/mariadb; \
-		sudo docker-compose -f $(DOCKER_COMPOSE_FILE) up -d --build; \
-	else \
-		echo "Containers already build"; \
-	fi
+	@sudo hostsed add 127.0.0.1 bwong.42.fr && echo "successfully added bwong.42.fr to /etc/hosts"
+	sudo docker compose -f ./srcs/docker-compose.yml up -d
 
+clean:
+	sudo docker compose -f ./srcs/docker-compose.yml down --rmi all -v
+#	uncomment the following line to remove the images too
+#	sudo docker system prune -a
 
-up :
-	sudo docker-compose -f $(DOCKER_COMPOSE_FILE) up -d
-
-# Clean up containers
-clean: stop
-	sudo docker-compose -f $(DOCKER_COMPOSE_FILE) down -v
-
-# Remove data directories and clean up containers
 fclean: clean
-	sudo rm -rf $(DATA_DIR)/wordpress $(DATA_DIR)/mariadb; sudo docker stop $(shell sudo docker ps -qa); sudo docker rm $(shell sudo docker ps -qa); sudo docker rmi -f $(shell sudo docker images -qa); sudo docker rm $(shell sudo docker volume ls -q); sudo docker network rm $(shell sudo docker network ls -q) 2> /dev/null
+	@sudo hostsed rm 127.0.0.1 bwong.42.fr && echo "successfully removed bwong.42.fr to /etc/hosts"
+	@if [ -d "/home/bwong/data/wordpress" ]; then \
+	sudo rm -rf /home/bwong/data/wordpress/* && \
+	echo "successfully removed all contents from /home/bwong/data/wordpress/"; \
+	fi;
 
-# Stop containers
-stop:
-	sudo docker-compose -f $(DOCKER_COMPOSE_FILE) stop
+	@if [ -d "/home/bwong/data/mariadb" ]; then \
+	sudo rm -rf /home/bwong/data/mariadb/* && \
+	echo "successfully removed all contents from /home/bwong/data/mariadb/"; \
+	fi;
 
+re: fclean all
+
+ls:
+	sudo docker image ls
+	sudo docker ps
+
+.PHONY: all, clean, fclean, re, ls
