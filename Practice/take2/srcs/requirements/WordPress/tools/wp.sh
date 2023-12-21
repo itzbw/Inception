@@ -7,6 +7,6 @@ wp user create --path="/var/www/html/wordpress" --allow-root $WORDPRESS_DB_USER 
 wp theme install $WORDPRESS_THEME --activate --allow-root
 wp plugin update --allow-root --all
 wp post create --path="/var/www/html/wordpress" --allow-root --post_type=post --post_title='Hello Inception Blog!' --post_status=publish
-wp option update --path="/var/www/html/wordpress" --allow-root blogdescription 'Piggie Paradise'
+#wp option update --path="/var/www/html/wordpress" --allow-root blogdescription 'Piggie Paradise'
 mkdir -p /run/php/
 php-fpm7.3 -F
