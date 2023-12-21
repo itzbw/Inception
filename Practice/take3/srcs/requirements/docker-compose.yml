@@ -1,0 +1,78 @@
+#version: '1'
+
+######## SERVICES #########
+services:
+  nginx:
+    container_name: nginx
+    build:
+      context: ./requirements/nginx
+      dockerfile: Dockerfile
+    image: nginx
+    ports:
+      - 443:443
+    restart: always
+    depends_on:
+      - wordpress
+    env_file:
+      - .env
+    volumes:
+      - wordpress_vol:/var/www/html
+    networks:
+      - inception
+
+  wordpress:
+    container_name: wordpress
+    build: ./requirements/wordpress
+    image: wordpress
+    restart: always
+    depends_on:
+      - mariadb
+    env_file:
+      - .env
+    volumes:
+      - wordpress_vol:/var/www/html
+    networks:
+      - inception
+
+  mariadb:
+    container_name: mariadb
+    build:
+      context: ./requirements/mariadb
+      args:
+        - DB_NAME=${DB_NAME}
+        - DB_USER=${DB_USER}
+        - DB_PASSWORD=${DB_PASSWORD}
+        - DB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+    image: mariadb
+    restart: always
+    env_file:
+      - .env
+    networks:
+      - inception
+    volumes:
+     - mariadb_vol:/var/lib/mysql
+
+
+######## VOLUMES ##########
+volumes:
+  wordpress_vol:
+    driver: local
+    driver_opts:
+      # Whenever a file is changed in the container, the host is also updated
+      o: bind
+      # Allows to set a local volume
+      type: none
+      # location of the host to mount
+      device: /home/bwong/data/wordpress
+  mariadb_vol:
+   driver: local
+   driver_opts:
+     o: bind
+     type: none
+     device: /home/bwong/data/mariadb
+
+
+######## NETWORK ##########
+networks:
+  inception:
+    driver: bridge
