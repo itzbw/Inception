@@ -2,10 +2,17 @@ all:
 	sudo mkdir -p /home/bwong/data/wordpress/
 	sudo mkdir -p /home/bwong/data/mariadb/
 	docker compose -f srcs/docker-compose.yml up -d --build
+
+down:
+	ocker compose -f srcs/docker-compose.yml down
+
+up:
+	docker compose -f srcs/docker-compose.yml up -d
+
 clean:
 	docker compose -f srcs/docker-compose.yml down
-	docker rmi -f $$(docker images -qa) 
-	docker volume rm $$(docker volume ls -q) 
+	docker rmi -f $$(docker images -qa)
+	docker volume rm $$(docker volume ls -q)
 
 fclean: clean prune
 	sudo rm -rf /home/bwong/data/wordpress/*
