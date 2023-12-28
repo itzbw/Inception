@@ -2,17 +2,40 @@
 
 sleep 10
 
-if [ ! -f /var/www/html/wp-config.php ];
+if [ -f /var/www/html/wp-config.php ]
 then
+	echo "wordpress already downloaded"
+else
 	cd /var/www/html
-	wp core download --allow-root
-	wp config create --dbname=$DB_NAME --dbuser=$DB_USER --dbpass=$DB_PASSWORD --dbhost=$DB_HOST --allow-root
-	wp core install --url=$WP_DOMAIN --title=$WP_TITLE --admin_user=$WP_ADMIN --admin_password=$WP_ADMIN_PASSWORD --admin_email=$WP_EMAIL --allow-root
-	wp user create $WP_USER_NAME $WP_USER_EMAIL --user_pass=$WP_USER_PASSWORD --role=author --allow-root
-	wp theme install astra --activate
-	wp plugin update --all
+
+	wp config create \
+		--allow-root \
+		--dbhost=$DB_HOST \
+		--dbname=$DB_NAME \
+		--dbpass=$DB_PASSWORD \
+		--dbuser=$DB_USER
+
+	wp core install --allow-root \
+		--url=$WP_DOMAIN \
+		--title=$WP_TITLE \
+		--admin_user=$WP_ADMIN \
+		--admin_password=$WP_ADMIN_PASSWORD \
+		--admin_email=$WP_EMAIL
+		#--skip-email \
+		#--path='/var/www/html'
+	echo "Admin user has been created!"
+
+	wp user create --allow-root \
+		--role=author $WP_USER_NAME $WP_USER_EMAIL \
+		--user_pass=$WP_USER_PASSWORD
+		#--path='/var/www/html' \
+
+	echo "User1 has been created!"
+
+	echo "Wordpress is set up!"
 
 fi
+
 # Start the PHP-FPM process
 # PHP-FPM stands for PHP FastCGI Process Manager.
 # It is a PHP extension that allows PHP to operate as a FastCGI process manager for web servers like Nginx

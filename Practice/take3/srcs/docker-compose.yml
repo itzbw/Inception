@@ -1,49 +1,7 @@
-#version: '1'
+version: '3'
 
 ######## SERVICES #########
 services:
-  nginx:
-    container_name: nginx
-    build:
-      context: ./requirements/nginx
-      dockerfile: Dockerfile
-    image: nginx
-    ports:
-      - 443:443
-    restart: always
-    depends_on:
-      - wordpress
-    env_file:
-      - .env
-    volumes:
-      - wordpress_vol:/var/www/html
-    networks:
-      - inception
-
-  wordpress:
-    container_name: wordpress
-    build:
-      context: ./requirements/wordpress
-      args:
-        - WP_DOMAIN=${WP_DOMAIN}
-        - WP_TITLE=${WP_TITLE}
-        - WP_ADMIN=${WP_ADMIN}
-        - WP_ADMIN_PASSWORD=${WP_ADMIN_PASSWORD}
-        - WP_EMAIL=${WP_EMAIL}
-        - WP_USER_NAME=${WP_USER_NAME}
-        - WP_USER_EMAIL=${WP_USER_EMAIL}
-        - WP_USER_PASSWORD=${WP_USER_PASSWORD}
-    image: wordpress
-    restart: always
-    depends_on:
-      - mariadb
-    env_file:
-      - .env
-    volumes:
-      - wordpress_vol:/var/www/html
-    networks:
-      - inception
-
   mariadb:
     container_name: mariadb
     build:
@@ -61,6 +19,54 @@ services:
       - inception
     volumes:
      - mariadb_vol:/var/lib/mysql
+
+  nginx:
+    container_name: nginx
+    build:
+      context: ./requirements/nginx
+      dockerfile: Dockerfile
+    image: nginx
+    ports:
+      - 443:443
+    restart: always
+    depends_on:
+      - wordpress
+    env_file:
+      - .env
+    # environment:
+    #   DOMAIN_NAME: ${WP_DOMAIN}
+    volumes:
+      - wordpress_vol:/var/www/html
+    networks:
+      - inception
+
+  wordpress:
+    container_name: wordpress
+    build:
+      context: ./requirements/wordpress
+      # args:
+      #   - DB_NAME=${DB_NAME}
+      #   - DB_USER=${DB_USER}
+      #   - DB_PASSWORD=${DB_PASSWORD}
+      #   - DB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      #   - WP_DOMAIN=${WP_DOMAIN}
+      #   - WP_TITLE=${WP_TITLE}
+      #   - WP_ADMIN=${WP_ADMIN}
+      #   - WP_ADMIN_PASSWORD=${WP_ADMIN_PASSWORD}
+      #   - WP_EMAIL=${WP_EMAIL}
+      #   - WP_USER_NAME=${WP_USER_NAME}
+      #   - WP_USER_EMAIL=${WP_USER_EMAIL}
+      #   - WP_USER_PASSWORD=${WP_USER_PASSWORD}
+    image: wordpress
+    restart: always
+    depends_on:
+      - mariadb
+    env_file:
+      - .env
+    volumes:
+      - wordpress_vol:/var/www/html
+    networks:
+      - inception
 
 
 ######## VOLUMES ##########
