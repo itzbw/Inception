@@ -1,4 +1,4 @@
-FROM debian:bullseye
+FROM debian:buster
 
 # Install mariadb
 RUN apt-get update -y
