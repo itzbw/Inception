@@ -1,4 +1,4 @@
-FROM debian:buster
+FROM debian:bullseye
 
 # Install PHP
 RUN apt-get update -y
