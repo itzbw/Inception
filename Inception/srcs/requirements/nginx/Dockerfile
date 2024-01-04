@@ -23,6 +23,8 @@ RUN openssl req -new -newkey\
 	# renewal period
 	-days 365\
 	# Avoids password requirement
+	# -out /etc/nginx/ssl/inception.crt
+	#-keyout /etc/nginx/ssl/inception.key
 	-nodes\
 	-keyout /etc/ssl/bwong.key\
 	-out /etc/ssl/bwong.csr\
@@ -36,7 +38,7 @@ EXPOSE 443
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
 
-#For Docker containers (or for debugging), 
-#the daemon off; directive tells Nginx to stay in the foreground. 
-#For containers this is useful as best practice is for one container = one process. 
-#One server (container) has only one service. 
+#For Docker containers (or for debugging),
+#the daemon off; directive tells Nginx to stay in the foreground.
+#For containers this is useful as best practice is for one container = one process.
+#One server (container) has only one service.
