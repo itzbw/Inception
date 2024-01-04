@@ -1,6 +1,6 @@
 all:
 	sudo mkdir -p /home/bwong/data/wordpress/
-    sudo mkdir -p /home/bwong/data/mariadb/
+	sudo mkdir -p /home/bwong/data/mariadb/
 	docker compose -f srcs/docker-compose.yml up -d --build
 
 down:
