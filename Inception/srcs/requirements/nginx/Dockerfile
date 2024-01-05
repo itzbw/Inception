@@ -27,10 +27,10 @@ RUN openssl req -new -newkey\
 	#-keyout /etc/nginx/ssl/inception.key
 	-nodes\
 	-keyout /etc/ssl/bwong.key\
-	-out /etc/ssl/bwong.csr\
+	-out /etc/ssl/bwong.crt\
 	-subj "/C=EN/ST=Paris/L=Paris/O=bwong.42.fr/CN=bwong"
 
-RUN cat /etc/ssl/bwong.csr /etc/ssl/bwong.key > /etc/ssl/bwong.pem
+RUN cat /etc/ssl/bwong.crt /etc/ssl/bwong.key > /etc/ssl/bwong.pem
 
 # Connection port
 EXPOSE 443
