@@ -28,7 +28,7 @@ RUN openssl req -new -newkey\
 	-nodes\
 	-keyout /etc/ssl/bwong.key\
 	-out /etc/ssl/bwong.crt\
-	-subj "/C=EN/ST=Paris/L=Paris/O=bwong.42.fr/CN=bwong"
+	-subj "/C=EN/ST=Paris/L=Paris/O=42/CN=bwong.42.fr"
 
 RUN cat /etc/ssl/bwong.crt /etc/ssl/bwong.key > /etc/ssl/bwong.pem
 
